@@ -18,7 +18,22 @@ var crypto = global.crypto || global.msCrypto
 if (crypto && crypto.getRandomValues) {
   module.exports = randomBytes
 } else {
-  module.exports = oldBrowser
+  module.exports = unsafeRandomBytes
+}
+
+function unsafeRandomBytes (size, cb) {
+  // phantomjs needs to throw
+  if (size > MAX_UINT32) throw new RangeError('requested too many random bytes')
+
+  var bytes = Buffer.allocUnsafe(size).fill(0)
+
+  if (typeof cb === 'function') {
+    return process.nextTick(function () {
+      cb(null, bytes)
+    })
+  }
+
+  return bytes
 }
 
 function randomBytes (size, cb) {
